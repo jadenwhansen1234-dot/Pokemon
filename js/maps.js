@@ -125,7 +125,6 @@ var MAPS = {};
   house(bramble, 4, 4, 'pokecenter'); house(bramble, 21, 4, 'gym'); house(bramble, 21, 14, 'shop');
   prop(bramble, 'fountain', 14, 9, { blocked: true }); prop(bramble, 'sign', 14, 18, { blocked: false, text: 'BRAMBLE TOWN — Verdant Badge' });
   npc(bramble, 'healer_ivy', 'Nurse Ivy', 7, 10, { dialogue: 'Your Pokémon look ready for the road. Rest here whenever you need.' });
-  npc(bramble, 'leader_flora', 'Flora', 23, 11, { trainer: 'leader_flora', direction: 'left' });
 
   // Eastern lowlands, coast, cave and Duneveil.
   const route2 = outdoor('route2', 'Silverleaf Road', 'route', 'route2');
