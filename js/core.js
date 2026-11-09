@@ -17,9 +17,14 @@ const cap = (s) => s ? s[0].toUpperCase() + s.slice(1) : s;
 
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function weighted(list) {
-  const total = list.reduce((s, e) => s + (e.weight || 1), 0);
+  const weightOf = entry => {
+    const value = Number(entry.weight ?? entry.w ?? 1);
+    return Number.isFinite(value) && value > 0 ? value : 0;
+  };
+  const total = list.reduce((sum, entry) => sum + weightOf(entry), 0);
+  if (!total) return pick(list);
   let r = Math.random() * total;
-  for (const e of list) { r -= (e.weight || 1); if (r <= 0) return e; }
+  for (const entry of list) { r -= weightOf(entry); if (r < 0) return entry; }
   return list[list.length - 1];
 }
 function roman(n) { return ['','I','II','III','IV','V','VI','VII','VIII'][n] || n; }
