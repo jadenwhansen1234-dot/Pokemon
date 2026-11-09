@@ -480,6 +480,91 @@ body::before {
 .shop-item .n { flex: 1; font-family: 'PixelTitle'; font-size: 8px; }
 .shop-item .p { font-family: 'PixelTitle'; font-size: 8px; color: var(--gold); }
 
+/* ---------- choice menus ---------- */
+.menu-window {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  overflow: auto;
+  padding: 22px 24px 18px;
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(25,34,70,.98), rgba(9,13,29,.99));
+  border: 3px solid #e8d9a0;
+  border-radius: 14px;
+  box-shadow: 0 0 0 3px #141a33, 0 18px 50px rgba(0,0,0,.8), 0 0 0 100vmax rgba(3,5,12,.66);
+}
+.menu-title {
+  margin: 0 0 10px;
+  color: var(--gold);
+  font: 11px/1.5 'PixelTitle', monospace;
+  text-align: center;
+  text-shadow: 0 2px 0 #000;
+}
+.menu-description {
+  margin: 0 auto 16px;
+  max-width: 46em;
+  color: #dce3f7;
+  font-size: 23px;
+  line-height: 1.05;
+  text-align: center;
+}
+.menu-list { display: grid; gap: 8px; }
+.menu-option {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 14px;
+  color: #f7f4e9;
+  background: linear-gradient(180deg, #1a2448, #111831);
+  border: 2px solid #3b4b86;
+  border-radius: 9px;
+  font: 23px/1 'PixelBody', monospace;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .12s, background .12s, transform .12s, box-shadow .12s;
+}
+.menu-option:hover, .menu-option.selected, .menu-option:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  background: linear-gradient(180deg, #303d70, #1b2548);
+  box-shadow: 0 0 0 2px rgba(245,197,66,.2), inset 0 1px 0 rgba(255,255,255,.12);
+}
+.menu-option.selected { transform: translateY(-1px); }
+.menu-option:disabled { opacity: .5; cursor: not-allowed; }
+.menu-footer {
+  display: block;
+  margin-top: 14px;
+  color: #9ca9d0;
+  font-size: 18px;
+  line-height: 1.1;
+  text-align: center;
+}
+.menu-starters { width: min(900px, calc(100% - 32px)); padding: 24px 26px 18px; }
+.menu-starters .menu-title { font-size: 13px; margin-bottom: 12px; }
+.menu-starters .menu-description { font-size: 25px; }
+.menu-starters .menu-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.starter-choice {
+  display: flex;
+  min-width: 0;
+  min-height: 190px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 12px 8px;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 30%, rgba(103,232,249,.12), transparent 68%), linear-gradient(180deg, #1a2450, #0d1329);
+  border-width: 3px;
+  border-radius: 12px;
+}
+.starter-choice:nth-child(2) { background-image: radial-gradient(ellipse at 50% 30%, rgba(255,122,84,.14), transparent 68%), linear-gradient(180deg, #1a2450, #0d1329); }
+.starter-choice:nth-child(3) { background-image: radial-gradient(ellipse at 50% 30%, rgba(125,232,145,.14), transparent 68%), linear-gradient(180deg, #1a2450, #0d1329); }
+.starter-sprite { width: 112px; height: 112px; flex: 0 0 auto; image-rendering: pixelated; filter: drop-shadow(0 5px 5px rgba(0,0,0,.42)); }
+.starter-copy { display: flex; flex-direction: column; gap: 5px; }
+.starter-label { color: #fff4d1; font: 9px/1.5 'PixelTitle', monospace; }
+.starter-detail { color: #b7c5e7; font: 20px/1 'PixelBody', monospace; }
+
 /* starter picker */
 .starters { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 .starter-card {
@@ -534,4 +619,20 @@ body::before {
   .party-grid { grid-template-columns: 1fr; }
   .battle-cmd { width: 260px; }
   .title-menu { bottom: 4%; }
+  .menu-window { width: calc(100% - 24px); padding: 18px 16px 14px; }
+  .menu-starters { width: calc(100% - 20px); padding: 16px 12px 12px; }
+  .menu-starters .menu-list { gap: 8px; }
+  .starter-choice { min-height: 158px; padding: 9px 5px; }
+  .starter-sprite { width: 88px; height: 88px; }
+}
+
+@media (max-width: 480px) {
+  .menu-starters .menu-title { font-size: 10px; }
+  .menu-starters .menu-description { font-size: 20px; margin-bottom: 10px; }
+  .menu-starters .menu-list { gap: 6px; }
+  .starter-choice { min-height: 132px; gap: 4px; padding: 7px 3px; }
+  .starter-sprite { width: 68px; height: 68px; }
+  .starter-label { font-size: 7px; }
+  .starter-detail { font-size: 17px; }
+  .menu-starters .menu-footer { margin-top: 9px; font-size: 15px; }
 }

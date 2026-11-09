@@ -89,7 +89,7 @@ const UI = (() => {
     menuItems = (entries || []).map(entry => typeof entry === 'string' ? { label: entry, value: entry } : entry);
     selected = Math.max(0, Math.min(options.selected || 0, Math.max(0, menuItems.length - 1)));
     const panel = document.createElement('section');
-    panel.className = 'menu-window';
+    panel.className = `menu-window${options.layout ? ` menu-${options.layout}` : ''}`;
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-label', String(title || 'Menu'));
     const heading = document.createElement('h2');
@@ -107,10 +107,35 @@ const UI = (() => {
     menuItems.forEach((item, index) => {
       const row = document.createElement('button');
       row.type = 'button';
-      row.className = 'menu-option';
+      row.className = `menu-option${item.sprite ? ' starter-choice' : ''}`;
       row.dataset.menuIndex = String(index);
       row.disabled = !!item.disabled;
-      setText(row, item.label);
+      if (item.sprite && typeof creatureCanvas === 'function') {
+        const sprite = document.createElement('canvas');
+        sprite.className = 'starter-sprite';
+        sprite.width = 96;
+        sprite.height = 96;
+        sprite.setAttribute('aria-hidden', 'true');
+        const spriteCtx = sprite.getContext('2d');
+        const source = creatureCanvas(item.sprite);
+        if (source && spriteCtx) {
+          spriteCtx.imageSmoothingEnabled = false;
+          spriteCtx.drawImage(source, 0, 0, sprite.width, sprite.height);
+        }
+        const copy = document.createElement('span');
+        copy.className = 'starter-copy';
+        const name = document.createElement('strong');
+        name.className = 'starter-label';
+        setText(name, item.label);
+        const detail = document.createElement('small');
+        detail.className = 'starter-detail';
+        setText(detail, item.detail || '');
+        copy.append(name, detail);
+        row.append(sprite, copy);
+        row.setAttribute('aria-label', `${item.label}${item.detail ? `, ${item.detail}` : ''}`);
+      } else {
+        setText(row, item.label);
+      }
       row.addEventListener('click', () => {
         selected = index; paintSelection();
         if (!row.disabled) finishMenu(item.value ?? item.label);

@@ -22,9 +22,9 @@ let stepDelay = 0;
 
 function starterEntries() {
   return [
-    { label: 'Sobble · Water / Ghost', value: 'sobble_a' },
-    { label: 'Litten · Fire / Ground', value: 'litten_a' },
-    { label: 'Treecko · Grass / Fighting', value: 'treecko_a' }
+    { label: 'Sobble', detail: 'Water / Ghost', sprite: 'sobble_a', value: 'sobble_a' },
+    { label: 'Litten', detail: 'Fire / Ground', sprite: 'litten_a', value: 'litten_a' },
+    { label: 'Treecko', detail: 'Grass / Fighting', sprite: 'treecko_a', value: 'treecko_a' }
   ];
 }
 
@@ -81,6 +81,7 @@ function applySave(save) {
 
 async function chooseStarter() {
   const choice = await UI.menu('Choose your first partner', starterEntries(), {
+    layout: 'starters',
     description: 'Every journey begins with trust. Select a Pokémon to travel with you.',
     footer: 'Arrow keys / WASD to choose · Z / Enter to confirm'
   });
