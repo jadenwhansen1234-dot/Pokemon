@@ -12,6 +12,7 @@ const UI = (() => {
   let dialogueResolve = null;
   let selected = 0;
   let menuItems = [];
+  let menuGrid = false;
   let menuResolve = null;
   let menuCleanup = null;
 
@@ -65,11 +66,11 @@ const UI = (() => {
   }
   function menuKey(event) {
     if (!menuResolve) return;
-    if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's') {
+    if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's' || (menuGrid && event.key === 'ArrowRight')) {
       event.preventDefault(); event.stopPropagation();
       if (menuItems.length) selected = (selected + 1) % menuItems.length;
       paintSelection();
-    } else if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'w') {
+    } else if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'w' || (menuGrid && event.key === 'ArrowLeft')) {
       event.preventDefault(); event.stopPropagation();
       if (menuItems.length) selected = (selected + menuItems.length - 1) % menuItems.length;
       paintSelection();
@@ -87,9 +88,10 @@ const UI = (() => {
     if (dialogueResolve) dismissDialogue();
     active = true;
     menuItems = (entries || []).map(entry => typeof entry === 'string' ? { label: entry, value: entry } : entry);
+    menuGrid = options.layout === 'cards';
     selected = Math.max(0, Math.min(options.selected || 0, Math.max(0, menuItems.length - 1)));
     const panel = document.createElement('section');
-    panel.className = 'menu-window';
+    panel.className = `menu-window${menuGrid ? ' starter-menu' : ''}`;
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-label', String(title || 'Menu'));
     const heading = document.createElement('h2');
@@ -103,14 +105,38 @@ const UI = (() => {
       panel.append(description);
     }
     const list = document.createElement('div');
-    list.className = 'menu-list';
+    list.className = menuGrid ? 'menu-list starter-options' : 'menu-list';
     menuItems.forEach((item, index) => {
       const row = document.createElement('button');
       row.type = 'button';
-      row.className = 'menu-option';
+      row.className = menuGrid ? 'starter-card' : 'menu-option';
       row.dataset.menuIndex = String(index);
       row.disabled = !!item.disabled;
-      setText(row, item.label);
+      if (menuGrid && item.sprite) {
+        const sprite = document.createElement('canvas');
+        sprite.className = 'starter-sprite';
+        sprite.width = 128;
+        sprite.height = 128;
+        sprite.setAttribute('aria-hidden', 'true');
+        const ctx = sprite.getContext('2d');
+        if (ctx) drawCreature(ctx, item.sprite, 4, 4, 120);
+        const name = document.createElement('span');
+        name.className = 'starter-name';
+        setText(name, item.name || item.label);
+        const types = document.createElement('span');
+        types.className = 'starter-types';
+        (item.types || []).forEach(type => {
+          const chip = document.createElement('span');
+          chip.className = `tchip type-${String(type).toLowerCase()}`;
+          chip.style.backgroundColor = TYPE_COLORS[type] || '#cbd5e1';
+          setText(chip, type);
+          types.append(chip);
+        });
+        row.setAttribute('aria-label', `${item.name || item.label}, ${(item.types || []).join(' and ')}`);
+        row.append(sprite, name, types);
+      } else {
+        setText(row, item.label);
+      }
       row.addEventListener('click', () => {
         selected = index; paintSelection();
         if (!row.disabled) finishMenu(item.value ?? item.label);

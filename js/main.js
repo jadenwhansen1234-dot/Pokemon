@@ -21,11 +21,16 @@ let lastStep = 0;
 let stepDelay = 0;
 
 function starterEntries() {
-  return [
-    { label: 'Sobble · Water / Ghost', value: 'sobble_a' },
-    { label: 'Litten · Fire / Ground', value: 'litten_a' },
-    { label: 'Treecko · Grass / Fighting', value: 'treecko_a' }
-  ];
+  return ['sobble_a', 'litten_a', 'treecko_a'].map(id => {
+    const species = SPECIES[id];
+    return {
+      label: species.name,
+      name: species.name,
+      value: id,
+      sprite: id,
+      types: species.types
+    };
+  });
 }
 
 function saveGame() {
@@ -81,6 +86,7 @@ function applySave(save) {
 
 async function chooseStarter() {
   const choice = await UI.menu('Choose your first partner', starterEntries(), {
+    layout: 'cards',
     description: 'Every journey begins with trust. Select a Pokémon to travel with you.',
     footer: 'Arrow keys / WASD to choose · Z / Enter to confirm'
   });

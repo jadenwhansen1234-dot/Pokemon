@@ -201,6 +201,42 @@ body::before {
 }
 #overlay > * { pointer-events: auto; }
 #overlay.hidden { display: none; }
+.menu-window {
+  position: absolute;
+  left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(460px, 92%); max-height: 92%; overflow: auto;
+  padding: 22px; color: var(--text); text-align: center;
+  background: linear-gradient(180deg, rgba(25,34,69,.98), rgba(9,13,29,.99));
+  border: 3px solid #e8d9a0; border-radius: 14px;
+  box-shadow: 0 0 0 3px #141a33, 0 18px 50px rgba(0,0,0,.8), inset 0 0 0 2px #2e3a68;
+}
+.menu-title { margin: 0 0 10px; color: var(--gold); font: 13px 'PixelTitle', monospace; line-height: 1.6; }
+.menu-description { margin: 0 auto 16px; max-width: 650px; color: #dce3f7; font: 24px/1.1 'PixelBody', monospace; }
+.menu-list { display: flex; flex-direction: column; gap: 8px; }
+.menu-option {
+  padding: 10px 14px; color: #f4f1e8; text-align: left; cursor: pointer;
+  font: 10px 'PixelTitle', monospace; background: #111731; border: 2px solid #3b4b86; border-radius: 8px;
+}
+.menu-option:hover, .menu-option.selected { border-color: var(--gold); color: var(--gold); }
+.menu-option:disabled { opacity: .45; cursor: not-allowed; }
+.menu-footer { display: block; margin-top: 16px; color: #9da9d1; font: 9px 'PixelTitle', monospace; line-height: 1.6; }
+.starter-menu { width: min(850px, 96%); padding: 24px 28px 20px; }
+.starter-menu .menu-title { font-size: 15px; }
+.starter-menu .menu-description { margin-bottom: 12px; }
+.starter-options { flex-direction: row; justify-content: center; gap: 16px; }
+.starter-card {
+  display: flex; flex: 1 1 0; min-width: 0; max-width: 220px; flex-direction: column; align-items: center;
+  padding: 10px 8px 14px; color: var(--text); cursor: pointer;
+  background: linear-gradient(180deg, #1a2450, #0d1329); border: 3px solid #3b4b86; border-radius: 14px;
+  transition: transform .15s, border-color .15s, box-shadow .15s;
+}
+.starter-card:hover { transform: translateY(-4px); border-color: #9a8bce; }
+.starter-card.selected { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(245,197,66,.28), 0 12px 26px rgba(0,0,0,.35); }
+.starter-card:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+.starter-sprite { width: 128px; height: 128px; max-width: 100%; image-rendering: pixelated; }
+.starter-name { margin: 4px 0 10px; color: #fff; font: 10px 'PixelTitle', monospace; }
+.starter-types { display: flex; justify-content: center; gap: 5px; }
+.starter-types .tchip { font-size: 7px; padding: 4px 6px 3px; }
 
 /* ---------- title ---------- */
 .title-wrap {
