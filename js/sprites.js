@@ -460,6 +460,31 @@ function makeCreatureCanvas(sp, opts={}) {
     eyeSet(36,34,7,3,4);
   }
 
+  // Starter-specific markings keep the three Aurelian partners distinct
+  // even when they share the same underlying body construction.
+  if (sp.id === 'litten_a') {
+    // Volcanic tabby stripes, a bright chest bib and a forehead ember.
+    PX.tri(x,43,27,48,25,48,30,dark); PX.tri(x,67,27,62,25,62,30,dark);
+    PX.tri(x,44,31,49,29,48,33,dark); PX.tri(x,66,31,61,29,62,33,dark);
+    PX.tri(x,53,18,56,15,59,18,accent); PX.rect(x,55,18,2,2,extra);
+    PX.ell(x,40,43,6,4,accent); PX.ell(x,39,42,3,2,extra);
+    PX.tri(x,37,44,40,39,43,44,extra);
+  } else if (sp.id === 'sobble_a') {
+    // Water-drop cheek markings, a luminous throat and a finned tail.
+    PX.ell(x,44,30,2,3,accent); PX.ell(x,45,29,1,1,extra);
+    PX.ell(x,63,30,2,3,accent); PX.ell(x,62,29,1,1,extra);
+    PX.tri(x,35,38,40,35,43,38,light); PX.tri(x,35,38,40,41,43,38,accent);
+    PX.line(x,15,41,11,35,accent,2); PX.line(x,15,41,10,44,light,2);
+    PX.rect(x,36,35,1,2,'#ffffff');
+  } else if (sp.id === 'treecko_a') {
+    // Seed-shaped belly, cheek scales and a broad veined leaf-tail.
+    PX.ell(x,38,44,6,5,light); PX.ell(x,37,43,3,2,'#eaffb8');
+    PX.ell(x,44,29,2,2,accent); PX.ell(x,62,29,2,2,accent);
+    PX.tri(x,16,42,7,32,22,38,accent); PX.tri(x,16,40,10,33,20,38,light);
+    PX.line(x,10,38,21,41,dark,1); PX.line(x,14,39,15,35,dark,1);
+    PX.rect(x,35,35,2,1,extra); PX.rect(x,41,35,2,1,extra);
+  }
+
   // elemental flourishes around the sprite
   if (Array.isArray(sp.types) && sp.types[0]) typeFlair(sp.types[0]);
 

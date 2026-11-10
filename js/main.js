@@ -155,14 +155,116 @@ function showTitle() {
   });
 }
 
+function refreshPartyHud() {
+  UI.updateHud(MAPS[World.state.mapId]?.name || '', Game.party);
+}
+
+function memberLabel(mon, index) {
+  const hp = `${Math.max(0, Number(mon.hp) || 0)}/${Math.max(1, Number(mon.maxHp) || 1)} HP`;
+  return `${index === 0 ? '★ ' : ''}${mon.name || mon.species} · Lv.${mon.level || 1} · ${hp}`;
+}
+
+async function inspectMember(mon) {
+  const species = SPECIES[mon.species];
+  const types = species?.types?.join(' / ') || 'Unknown type';
+  const moves = (mon.moves || []).map(id => MOVES[id]?.name || id).join(', ') || 'No moves';
+  await UI.say(`${mon.name || species?.name || 'Pokémon'} · ${types}\nLevel ${mon.level || 1} · HP ${Math.max(0, mon.hp || 0)}/${mon.maxHp || 1}\nMoves: ${moves}`, 'Pokédex');
+}
+
+async function manageParty() {
+  while (true) {
+    if (!Game.party.length) {
+      await UI.say('Your party is empty. Visit the PC Storage to retrieve a Pokémon.', 'Trainer');
+      return;
+    }
+    const entries = Game.party.map((mon, index) => ({
+      label: memberLabel(mon, index), value: `member:${index}`,
+      sprite: mon.species, detail: `${Math.max(0, mon.hp || 0)}/${mon.maxHp || 1} HP`
+    }));
+    entries.push({ label: 'Back', value: 'back' });
+    const choice = await UI.menu(`Party · ${Game.party.length}/6`, entries, { layout: 'party-list', footer: 'Choose a Pokémon to manage · X / Esc back' });
+    if (!choice || choice === 'back') return;
+
+    const index = Number(choice.slice('member:'.length));
+    const mon = Game.party[index];
+    if (!mon) continue;
+    const canDeposit = Game.party.length > 1;
+    const action = await UI.menu(mon.name || 'Pokémon', [
+      { label: 'Pokémon Details', value: 'details' },
+      { label: 'Make Lead Pokémon', value: 'lead', disabled: index === 0 },
+      { label: 'Move to PC Storage', value: 'deposit', disabled: !canDeposit },
+      { label: 'Back', value: 'back' }
+    ], { footer: 'Your lead Pokémon appears first in battle' });
+    if (!action || action === 'back') continue;
+    if (action === 'details') await inspectMember(mon);
+    if (action === 'lead' && Game.party[index] === mon) {
+      Game.party.splice(index, 1);
+      Game.party.unshift(mon);
+      refreshPartyHud();
+      saveGame();
+      await UI.say(`${mon.name} is now leading your party.`, 'Trainer');
+    }
+    if (action === 'deposit' && Game.party[index] === mon) {
+      if (Game.party.length <= 1) {
+        await UI.say('You must keep at least one Pokémon in your party.', 'PC');
+        continue;
+      }
+      Game.party.splice(index, 1);
+      Game.storage.push(mon);
+      refreshPartyHud();
+      saveGame();
+      await UI.say(`${mon.name} was safely deposited in PC Storage.`, 'PC');
+    }
+  }
+}
+
+async function manageStorage() {
+  while (true) {
+    const entries = Game.storage.map((mon, index) => ({
+      label: `${mon.name || mon.species} · Lv.${mon.level || 1} · ${Math.max(0, mon.hp || 0)}/${mon.maxHp || 1} HP`,
+      value: `stored:${index}`
+    }));
+    if (!entries.length) {
+      await UI.say('There are no Pokémon in PC Storage yet. Captures beyond your six-member party are sent here automatically.', 'PC Storage');
+      return;
+    }
+    entries.push({ label: 'Back', value: 'back' });
+    const choice = await UI.menu(`PC Storage · ${Game.storage.length}`, entries, { footer: `Party space: ${Game.party.length}/6 · Select a Pokémon to retrieve` });
+    if (!choice || choice === 'back') return;
+    const index = Number(choice.slice('stored:'.length));
+    const mon = Game.storage[index];
+    if (!mon) continue;
+    if (Game.party.length >= 6) {
+      await UI.say('Your party is full. Move a Pokémon to Storage before retrieving another.', 'PC');
+      continue;
+    }
+    const confirm = await UI.menu(`Retrieve ${mon.name || mon.species}?`, [
+      { label: 'Add to Party', value: 'retrieve' },
+      { label: 'Pokémon Details', value: 'details' },
+      { label: 'Back', value: 'back' }
+    ], { footer: `${Game.party.length}/6 party spaces used` });
+    if (confirm === 'details') { await inspectMember(mon); continue; }
+    if (confirm !== 'retrieve' || Game.storage[index] !== mon) continue;
+    Game.storage.splice(index, 1);
+    Game.party.push(mon);
+    refreshPartyHud();
+    saveGame();
+    await UI.say(`${mon.name} joined your party!`, 'PC');
+  }
+}
+
 async function partyMenu() {
-  const labels = Game.party.map(mon => `${mon.name} Lv.${mon.level}  ${Math.max(0, mon.hp)}/${mon.maxHp} HP`);
-  labels.push({ label: 'Save Game', value: 'save' }, { label: 'Close', value: 'close' });
-  const result = await UI.menu('Trainer Menu', labels, { footer: 'Z / Enter select · X / Esc close' });
-  if (result === 'save') saveGame();
-  else if (result && result !== 'close') {
-    const mon = Game.party.find(p => p.name === result.split(' Lv.')[0]);
-    if (mon) await UI.say(`${mon.name} is ready for adventure!`, 'Party');
+  while (true) {
+    const result = await UI.menu('Trainer Menu', [
+      { label: `Manage Party · ${Game.party.length}/6`, value: 'party' },
+      { label: `PC Storage · ${Game.storage.length}`, value: 'storage' },
+      { label: 'Save Game', value: 'save' },
+      { label: 'Close', value: 'close' }
+    ], { footer: 'Z / Enter select · X / Esc close' });
+    if (!result || result === 'close') return;
+    if (result === 'party') await manageParty();
+    else if (result === 'storage') await manageStorage();
+    else if (result === 'save') saveGame();
   }
 }
 

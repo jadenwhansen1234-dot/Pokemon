@@ -73,8 +73,30 @@ const World = (() => {
     }
     const obj = m.objects.find(o => o.x === x && o.y === y);
     if (obj) {
-      if (obj.interact === 'heal') { game.party.forEach(p => { p.hp = p.maxHp; p.status = null; }); await UI.say('Your Pokémon are fully restored!', 'Nurse'); }
-      else if (obj.text) await UI.say(obj.text, 'Aurelia');
+      if (obj.interact === 'heal') {
+        game.party.forEach(p => { p.hp = p.maxHp; p.status = null; });
+        UI.updateHud(m.name, game.party);
+        await UI.say('Your Pokémon are fully restored!', 'Nurse');
+      } else if (obj.interact === 'relic') {
+        const foundTruth = !!game.flags.relic_truth;
+        const foundIdeal = !!game.flags.relic_ideal;
+        game.inventory.relic_truth = 1;
+        game.inventory.relic_ideal = 1;
+        game.flags.relic_truth = true;
+        game.flags.relic_ideal = true;
+        await UI.say(foundTruth && foundIdeal
+          ? 'The Twin Reliquary glows softly. Its two relics already rest in your Key Items.'
+          : 'The Twin Reliquary awakens! You received the Relic of Truth and the Relic of Ideals.', 'Aurelia');
+        if (typeof saveGame === 'function') saveGame();
+      } else if (obj.interact === 'soul_ember') {
+        const alreadyFound = !!game.flags.soul_ember;
+        game.inventory.soul_ember = 1;
+        game.flags.soul_ember = true;
+        await UI.say(alreadyFound
+          ? 'The altar’s ancient flame answers your presence. The Soul Ember is safe in your Key Items.'
+          : 'A warm flame rises from the altar and settles into your hands. You received the Soul Ember!', 'Aurelia');
+        if (typeof saveGame === 'function') saveGame();
+      } else if (obj.text) await UI.say(obj.text, 'Aurelia');
       else await UI.say('A quiet power hums beneath this place.');
       return;
     }
