@@ -164,7 +164,7 @@ const UI = (() => {
   function updateHud(location, party) {
     const loc = $('#location');
     const partyHud = $('#partyHud');
-    if (loc && location != null) setText(loc, location);
+    if (loc && location != null && String(location).trim()) setText(loc, location);
     if (partyHud && Array.isArray(party)) {
       partyHud.replaceChildren(...party.map(mon => {
         const chip = document.createElement('span');

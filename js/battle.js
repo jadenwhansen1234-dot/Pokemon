@@ -179,6 +179,15 @@ const Battle = (() => {
     session.commandNode = root.querySelector('.battle-cmd');
     session.foeStatus = root.querySelector('.foe-status');
     session.allyStatus = root.querySelector('.ally-status');
+    session.sceneTime = 0;
+    session.sceneStart = performance.now();
+    const tickScene = now => {
+      if (!session.root) return;
+      session.sceneTime = (now - session.sceneStart) / 1000;
+      drawScene(session);
+      session.raf = requestAnimationFrame(tickScene);
+    };
+    session.raf = requestAnimationFrame(tickScene);
     session.keyHandler = event => {
       if (event.key === 'Enter' || event.key === ' ' || event.key.toLowerCase() === 'z') {
         if (session.continueResolve) { event.preventDefault(); advance(session); }
@@ -224,23 +233,75 @@ const Battle = (() => {
     drawScene(session);
   }
 
+  function battleTheme(session) {
+    if (Art.battleThemeFor) {
+      const map = MAPS[session.area] || MAPS[session.location] || null;
+      if (map) return Art.battleThemeFor(map);
+    }
+    return session.areaTheme || 'route';
+  }
+
   function drawScene(session) {
     const canvas = session.scene;
     const ctx = canvas?.getContext('2d');
     if (!ctx) return;
     const w = canvas.width, h = canvas.height;
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, '#18204a'); grad.addColorStop(.54, '#647a9d'); grad.addColorStop(.55, '#527544'); grad.addColorStop(1, '#1a3429');
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = 'rgba(255,239,181,.24)'; ctx.beginPath(); ctx.arc(760, 155, 74, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.10)';
-    for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.ellipse(80 + i * 145, 430 + (i % 2) * 28, 95, 22, 0, 0, Math.PI * 2); ctx.fill(); }
-    ctx.fillStyle = 'rgba(13,25,20,.35)'; ctx.beginPath(); ctx.ellipse(690, 326, 190, 52, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(13,25,20,.35)'; ctx.beginPath(); ctx.ellipse(275, 540, 245, 60, 0, 0, Math.PI * 2); ctx.fill();
+    const time = session.sceneTime ?? performance.now() / 1000;
+    const theme = battleTheme(session);
+    let arena = null;
+    if (Art.drawBattleBackground) arena = Art.drawBattleBackground(ctx, w, h, theme, time);
+    else {
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#18204a'); grad.addColorStop(.55, '#527544'); grad.addColorStop(1, '#1a3429');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+    }
+    if (arena && Art.drawBattlePlatforms) Art.drawBattlePlatforms(ctx, arena);
+
     const foes = session.foeActive.map(i => session.foes[i]).filter(Boolean);
     const allies = session.playerActive.map(i => session.party[i]).filter(Boolean);
-    foes.forEach((mon, i) => { if (alive(mon)) drawCreature(ctx, speciesOf(mon), 625 + i * 115, 205 - i * 14, 190, { flip:true }); });
-    allies.forEach((mon, i) => { if (alive(mon)) drawCreature(ctx, speciesOf(mon), 155 + i * 115, 400 - i * 16, 230); });
+    const foeX = arena ? arena.foe.x : 720, foeY = arena ? arena.foe.y : 388;
+    const allyX = arena ? arena.ally.x : 270, allyY = arena ? arena.ally.y : 624;
+    foes.forEach((mon, i) => {
+      if (!alive(mon)) return;
+      const bob = Math.sin(time * 1.6 + i) * 3;
+      drawCreature(ctx, speciesOf(mon), foeX - 95 + i * 120, foeY - 183 + bob - i * 14, 190, { flip: true });
+    });
+    allies.forEach((mon, i) => {
+      if (!alive(mon)) return;
+      const bob = Math.sin(time * 1.9 + i * 1.4) * 2;
+      drawCreature(ctx, speciesOf(mon), allyX - 115 + i * 124, allyY - 224 + bob - i * 16, 230);
+    });
+    if (arena) drawWeather(ctx, w, h, time, theme);
+  }
+
+  function drawWeather(ctx, w, h, time, theme) {
+    ctx.save();
+    if (theme === 'snow' || theme === 'summit') {
+      for (let i = 0; i < 60; i++) {
+        const s = i * 53.7;
+        const x = (s * 7 + time * 26 + Math.sin(time * .7 + i) * 18) % w;
+        const y = (s * 11 + time * 48 + i * 5) % h;
+        ctx.fillStyle = `rgba(255,255,255,${.3 + .4 * Math.abs(Math.sin(time + i))})`;
+        ctx.fillRect(x, y, i % 7 ? 1 : 2, i % 7 ? 1 : 2);
+      }
+    } else if (theme === 'sand') {
+      for (let i = 0; i < 46; i++) {
+        const s = i * 71.3;
+        const x = (s * 5 + time * 120) % w;
+        const y = (s * 13 + Math.sin(time + i) * 16) % h;
+        ctx.fillStyle = 'rgba(255,232,176,.28)';
+        ctx.fillRect(x, y, 3, 1);
+      }
+    } else if (theme === 'paradox') {
+      for (let i = 0; i < 40; i++) {
+        const s = i * 39.1;
+        const x = (s * 9 + Math.sin(time * .5 + i) * 24) % w;
+        const y = h - ((s * 17 + time * 30) % h);
+        ctx.fillStyle = `rgba(220,170,255,${.2 + .3 * Math.abs(Math.sin(time * 1.4 + i))})`;
+        ctx.fillRect(x, y, 2, 4);
+      }
+    }
+    ctx.restore();
   }
 
   function setCommands(session, entries) {
@@ -439,6 +500,7 @@ const Battle = (() => {
     session.ended = true; session.result = result;
     if (session.continueResolve) advance(session);
     if (session.keyHandler) document.removeEventListener('keydown', session.keyHandler, true);
+    if (session.raf) cancelAnimationFrame(session.raf);
     if (session.root) session.root.remove();
     if (typeof UI !== 'undefined' && UI.close) UI.close();
     current = null;
@@ -728,6 +790,7 @@ const Battle = (() => {
     }
     const session = {
       ...refs, party:refs.party, foes, wild:isWild, trainer, trainerId,
+      area: options.area || null, location: options.location || null, areaTheme: options.theme || null,
       canRun:options.canRun, canCapture:options.canCapture, teamBattle:!!options.teamBattle,
       playerActive:activeIndexes(refs.party, options.teamBattle ? 2 : 1),
       foeActive:activeIndexes(foes, options.teamBattle ? 2 : 1),

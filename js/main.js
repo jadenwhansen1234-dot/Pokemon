@@ -100,24 +100,20 @@ async function chooseStarter() {
   return true;
 }
 
+let titleStart = 0;
+
 function titleCanvas() {
+  titleStart = performance.now();
+  drawTitleFrame(performance.now());
+}
+
+function drawTitleFrame(now) {
   const canvas = $('#game');
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
-  ctx.fillStyle = '#090d20'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-  const glow = ctx.createRadialGradient(480, 290, 20, 480, 290, 420);
-  glow.addColorStop(0, '#27356e'); glow.addColorStop(1, '#090d20');
-  ctx.fillStyle = glow; ctx.fillRect(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < 80; i++) {
-    ctx.fillStyle = i % 4 === 0 ? '#f5c542' : '#67e8f9';
-    ctx.fillRect((i * 137) % 960, (i * 71) % 530, i % 3 + 1, i % 3 + 1);
-  }
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#67e8f9'; ctx.font = '22px PixelTitle, monospace'; ctx.fillText('POKÉMON', 480, 172);
-  ctx.fillStyle = '#f5c542'; ctx.font = '42px PixelTitle, monospace'; ctx.fillText('ECLIPSE', 480, 225);
-  ctx.fillStyle = '#f4f1e8'; ctx.font = '16px PixelBody, monospace'; ctx.fillText('AURELIA GENESIS', 480, 258);
-  ctx.fillStyle = '#9b7bff'; ctx.font = '14px PixelBody, monospace'; ctx.fillText('Where ancient souls awaken', 480, 535);
-  ctx.textAlign = 'left';
+  const time = (now - (titleStart || now)) / 1000;
+  if (Art.drawTitle) Art.drawTitle(ctx, canvas.width, canvas.height, time);
+  else { ctx.fillStyle = '#090d20'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
 }
 
 async function beginNewGame() {
@@ -148,7 +144,7 @@ function showTitle() {
     { label: 'New Game', value: 'new' },
     { label: 'Continue', value: 'continue', disabled: !hasSave },
     { label: 'How to Play', value: 'help' }
-  ], { description: 'Aurelia Genesis', footer: 'A journey beyond the eclipse' }).then(async choice => {
+  ], { layout: 'splash', description: 'Aurelia Genesis', footer: 'A journey beyond the eclipse' }).then(async choice => {
     if (!titleActive) return;
     if (choice === 'new') await beginNewGame();
     else if (choice === 'continue') await continueGame();
@@ -195,10 +191,15 @@ function heldMovement(now) {
 }
 
 function loop(now) {
-  const dt = Math.min(100, now - (loop._last || now)); loop._last = now;
-  heldMovement(now);
-  if (!titleActive) { World.update(dt); World.draw(); }
   requestAnimationFrame(loop);
+  const dt = Math.min(100, now - (loop._last || now)); loop._last = now;
+  try {
+    heldMovement(now);
+    if (titleActive) drawTitleFrame(now);
+    else { World.update(dt); World.draw(); }
+  } catch (error) {
+    console.error('Frame error:', error);
+  }
 }
 
 function boot() {
