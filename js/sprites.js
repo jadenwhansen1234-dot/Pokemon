@@ -63,29 +63,58 @@ const PX = {
   }
 };
 
-/* draw an outlined blob: silhouette + fill + shading + highlight */
+function spriteAlpha(hex, a) {
+  const [r,g,b] = hexToRgb(hex);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/* draw an outlined blob: silhouette + fill + layered shading + highlights */
 function blob(c,cx,cy,rx,ry,dark,base,light,opts={}) {
+  // silhouette / contact outline
   PX.ell(c,cx,cy,rx+2,ry+2,dark);
+  // base fill
   PX.ell(c,cx,cy,rx,ry,base);
-  PX.ell(c,cx-1,cy+ry*0.32,rx*0.78,ry*0.48,shiftColor(base,-8,.9,.82));
-  if (opts.highlight!==false) PX.ell(c,cx-rx*0.25,cy-ry*0.34,rx*0.52,ry*0.3,light);
-  // re-apply lower belly shading edge
-  PX.ell(c,cx-rx*0.1,cy+ry*0.58,rx*0.66,ry*0.28,dark);
-  PX.ell(c,cx-rx*0.05,cy+ry*0.5,rx*0.6,ry*0.3,shiftColor(base,-4,.85,.9));
+  // broad underside shading
+  PX.ell(c,cx,cy+ry*0.30,rx*0.94,ry*0.60,shiftColor(base,-7,.95,.81));
+  // mid-body gradient band
+  PX.ell(c,cx-rx*0.10,cy+ry*0.06,rx*0.78,ry*0.52,shiftColor(base,2,.88,.92));
+  // warm belly
+  PX.ell(c,cx-rx*0.05,cy+ry*0.55,rx*0.60,ry*0.30,opts.belly||shiftColor(base,8,.68,1.14));
+  // top-left key light
+  PX.ell(c,cx-rx*0.28,cy-ry*0.36,rx*0.52,ry*0.27,light);
+  PX.ell(c,cx-rx*0.34,cy-ry*0.42,rx*0.30,ry*0.15,'#ffffff');
+  // dither speckles along the shadow side for a soft pixel gradient
+  for (let i=0;i<4;i++){
+    const t=(i+1)/5;
+    PX.rect(c,Math.round(cx+rx*(.35+t*.4)),Math.round(cy+ry*(.10+t*.45)),1,1,spriteAlpha(dark,.35));
+  }
+  if (opts.detail!==false) {
+    PX.rect(c,Math.round(cx-rx*.34),Math.round(cy+ry*.30),Math.max(2,Math.round(rx*.3)),1,spriteAlpha(light,.30));
+  }
 }
 
 function eye(c,x,y,rx,ry,opts={}) {
-  PX.ell(c,x,y,rx+1,ry+1,'#1a1420');
-  PX.ell(c,x,y,rx,ry,'#ffffff');
-  PX.ell(c,x+ (opts.look||0.4)*rx*.4,y+ry*.05,rx*.62,ry*.66,opts.iris||'#1f2937');
-  PX.ell(c,x-rx*.18,y-ry*.26,rx*.28,ry*.28,'#ffffff');
-  if (opts.pupilShine!==false) PX.ell(c,x+rx*.25,y+ry*.2,rx*.12,ry*.14,'#ffffff');
+  const look = opts.look == null ? 0.4 : opts.look;
+  const iris = opts.iris || '#22314a';
+  // socket + sclera
+  PX.ell(c,x,y,rx+1.4,ry+1.4,'#17121f');
+  PX.ell(c,x,y,rx,ry,'#fbfdff');
+  // iris gradient
+  PX.ell(c,x+look*rx*.38,y+ry*.06,rx*.70,ry*.78,iris);
+  PX.ell(c,x+look*rx*.38,y+ry*.16,rx*.46,ry*.52,shiftColor(iris,-18,1.1,.72));
+  // pupil
+  PX.ell(c,x+look*rx*.40,y+ry*.14,rx*.23,ry*.34,'#0a0e18');
+  // catchlights
+  PX.ell(c,x-rx*.20,y-ry*.30,rx*.34,ry*.30,'#ffffff');
+  if (opts.pupilShine!==false) PX.ell(c,x+rx*.30,y+ry*.28,rx*.17,ry*.16,'#ffffff');
+  // brow / upper lid shadow
+  PX.rect(c,Math.round(x-rx),Math.round(y-ry-1),Math.round(rx*2+1),1,spriteAlpha('#17121f',.32));
 }
 
 function mouth(c,x,y,w,h,col='#2a1a24') { PX.ell(c,x,y,w,h,col); }
 
 function makeCreatureCanvas(sp, opts={}) {
-  const S = 72;
+  const S = 160;
   const c = document.createElement('canvas'); c.width=S; c.height=S;
   const x = c.getContext('2d'); x.imageSmoothingEnabled=false;
   const shiny = !!opts.shiny;
@@ -100,7 +129,8 @@ function makeCreatureCanvas(sp, opts={}) {
   const C = {base,dark,light,accent,extra,shiny};
   x.save();
   const scale = sp.scale || 1;
-  x.translate(S/2, S/2); x.scale(scale,scale); x.translate(-S/2,-S/2);
+  // Render at 2x with a small safe margin for the outline pass.
+  x.translate(S/2, S/2); x.scale(2*scale, 2*scale); x.translate(-36, -36);
 
   const shape = sp.shape || 'quad';
   const f = new Set(sp.features||[]);
@@ -133,6 +163,53 @@ function makeCreatureCanvas(sp, opts={}) {
     PX.tri(x,cx-w*.3,cy-h*.65,cx-w*.1,cy+h*.15,cx+w*.2,cy+h*.15,hi);
   };
   const eyeSet = (cx,cy,gap,rx=3,ry=4) => { eye(x,cx-gap,cy,rx,ry); eye(x,cx+gap,cy,rx,ry); };
+  const spark = (sx,sy,s,col) => {
+    PX.rect(x,sx-s,sy,2*s+1,1,col); PX.rect(x,sx,sy-s,1,2*s+1,col);
+    PX.rect(x,sx,sy,1,1,'#ffffff');
+  };
+  const bubble = (sx,sy,r,col) => {
+    PX.ell(x,sx,sy,r,r,spriteAlpha(col,.30));
+    PX.ell(x,sx-r*.3,sy-r*.3,Math.max(1,r*.4),Math.max(1,r*.4),spriteAlpha('#ffffff',.75));
+  };
+  const typeFlair = type => {
+    if (type === 'Fire') {
+      PX.rect(x,10,52,2,2,spriteAlpha(accent,.85)); PX.rect(x,7,47,1,3,spriteAlpha(extra,.8));
+      PX.rect(x,60,11,2,2,spriteAlpha(accent,.8)); PX.rect(x,64,16,1,2,spriteAlpha(extra,.7));
+    } else if (type === 'Water') {
+      bubble(10,26,3,accent); bubble(63,52,2.2,accent); bubble(58,8,1.6,extra);
+    } else if (type === 'Grass') {
+      PX.ell(x,9,24,4,2,shiftColor(accent,0,1,.9)); PX.tri(x,6,24,11,17,13,25,accent);
+      PX.ell(x,61,52,3.5,2,accent); PX.tri(x,58,52,63,45,65,53,shiftColor(accent,12,1,.95));
+    } else if (type === 'Electric') {
+      spark(9,22,3,accent); spark(62,14,2,extra); spark(57,55,1.5,accent);
+    } else if (type === 'Ghost') {
+      PX.ell(x,11,50,4,4,spriteAlpha(accent,.32)); PX.ell(x,63,42,3,3,spriteAlpha(accent,.26));
+      PX.ell(x,58,10,2.5,2.5,spriteAlpha(extra,.30));
+    } else if (type === 'Ice') {
+      spark(10,18,3,light); spark(63,46,2.4,extra); PX.rect(x,56,9,2,1,spriteAlpha(light,.8));
+    } else if (type === 'Fairy') {
+      spark(11,20,3,extra); spark(62,50,2.4,accent); PX.rect(x,58,9,1,1,'#ffffff');
+    } else if (type === 'Psychic') {
+      PX.ell(x,60,18,2.5,2.5,spriteAlpha(accent,.55)); PX.ell(x,9,44,2,2,spriteAlpha(extra,.45));
+      PX.ell(x,60,18,5,5,spriteAlpha(accent,.16));
+    } else if (type === 'Dragon') {
+      PX.rect(x,9,34,2,1,spriteAlpha(accent,.6)); PX.rect(x,61,24,1,2,spriteAlpha(extra,.55));
+      PX.rect(x,57,56,2,1,spriteAlpha(accent,.5));
+    } else if (type === 'Dark' || type === 'Poison') {
+      PX.ell(x,10,54,4,3,spriteAlpha(dark,.4)); PX.ell(x,62,50,3,2.5,spriteAlpha(accent,.30));
+    } else if (type === 'Ground' || type === 'Rock') {
+      PX.rect(x,12,62,2,1,spriteAlpha(dark,.5)); PX.rect(x,56,61,3,1,spriteAlpha(dark,.4));
+      PX.rect(x,7,57,1,1,spriteAlpha(light,.5));
+    } else if (type === 'Steel') {
+      spark(11,30,2.2,light); spark(62,18,1.8,extra);
+    } else if (type === 'Bug') {
+      PX.rect(x,10,36,1,1,spriteAlpha(accent,.9)); PX.rect(x,61,40,1,1,spriteAlpha(extra,.8));
+    } else if (type === 'Flying') {
+      PX.rect(x,8,30,3,1,spriteAlpha(light,.45)); PX.rect(x,59,52,3,1,spriteAlpha(light,.35));
+    } else if (type === 'Fighting') {
+      PX.rect(x,10,30,2,1,spriteAlpha(accent,.55)); PX.rect(x,60,52,2,1,spriteAlpha(accent,.45));
+    }
+  };
 
   if (shape === 'quad') {
     // tail
@@ -383,13 +460,53 @@ function makeCreatureCanvas(sp, opts={}) {
     eyeSet(36,34,7,3,4);
   }
 
+  // elemental flourishes around the sprite
+  if (Array.isArray(sp.types) && sp.types[0]) typeFlair(sp.types[0]);
+
   // shiny sparkles in sprite corner
   if (shiny) {
-    const spark = (sx,sy) => { PX.rect(x,sx-3,sy,7,1,'#fff7b0'); PX.rect(x,sx,sy-3,1,7,'#fff7b0'); PX.rect(x,sx-1,sy-1,3,3,'#ffffff'); };
-    spark(60,10); spark(12,18);
+    const sparkle = (sx,sy) => { PX.rect(x,sx-3,sy,7,1,'#fff7b0'); PX.rect(x,sx,sy-3,1,7,'#fff7b0'); PX.rect(x,sx-1,sy-1,3,3,'#ffffff'); };
+    sparkle(60,10); sparkle(12,18);
   }
   x.restore();
+  finishCreatureSprite(c, C);
   return c;
+}
+
+/* Add a crisp outer outline, top-left rim light and subtle inner shading. */
+function finishCreatureSprite(canvas, C) {
+  const w = canvas.width, h = canvas.height;
+  const ctx = canvas.getContext('2d');
+  let img;
+  try { img = ctx.getImageData(0, 0, w, h); } catch (error) { return; }
+  const src = img.data;
+  const out = new Uint8ClampedArray(src);
+  const [or, og, ob] = hexToRgb(shiftColor(C.dark, 0, 1, .62));
+  const [lr, lg, lb] = hexToRgb(C.light);
+  const alpha = (x, y) => (x < 0 || y < 0 || x >= w || y >= h) ? 0 : src[(y * w + x) * 4 + 3];
+  const isOpaque = (x, y) => alpha(x, y) > 90;
+  const neighbors = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (src[i + 3] < 10) {
+        let edge = false;
+        for (const [dx, dy] of neighbors) {
+          if (isOpaque(x + dx, y + dy)) { edge = true; break; }
+        }
+        if (edge) {
+          out[i] = or; out[i + 1] = og; out[i + 2] = ob; out[i + 3] = 232;
+        }
+      } else if (src[i + 3] > 120 && (!isOpaque(x, y - 1) || !isOpaque(x - 1, y))) {
+        const t = 0.30;
+        out[i] = src[i] * (1 - t) + lr * t;
+        out[i + 1] = src[i + 1] * (1 - t) + lg * t;
+        out[i + 2] = src[i + 2] * (1 - t) + lb * t;
+      }
+    }
+  }
+  img.data.set(out);
+  ctx.putImageData(img, 0, 0);
 }
 
 const CREATURE_CACHE = new Map();
