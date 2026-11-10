@@ -83,10 +83,11 @@ function effLabel(m) {
 /* ------------------------------------------------ audio */
 const Sound = {
   ctx: null, master: null, musicGain: null, sfxGain: null,
-  musicOn: true, sfxOn: true, track: null, loopTimer: null, noiseBuf: null, beat: 0,
+  musicOn: true, sfxOn: true, track: null, loopTimer: null, noiseBuf: null, beat: 0, unlocked: false, musicStarted: false,
 
   init() {
-    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    if (!this.unlocked) return;
+    if (this.ctx) return;
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     this.ctx = new AC();
@@ -98,6 +99,17 @@ const Sound = {
     this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  },
+  async unlock() {
+    this.unlocked = true;
+    this.init();
+    if (!this.ctx) return;
+    if (this.ctx.state === 'suspended') {
+      try { await this.ctx.resume(); } catch (error) { return; }
+    }
+    if (this.track && this.musicOn && !this.musicStarted) {
+      this.playTrack(this.track, { force: true });
+    }
   },
   setMusic(on) { this.musicOn = on; if (this.musicGain) this.musicGain.gain.setTargetAtTime(on ? 0.34 : 0, this.ctx.currentTime, .05); },
   setSfx(on) { this.sfxOn = on; if (this.sfxGain) this.sfxGain.gain.setTargetAtTime(on ? 0.5 : 0, this.ctx.currentTime, .05); },
@@ -132,17 +144,20 @@ const Sound = {
   midiFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); },
 
   playTrack(name, opts = {}) {
-    this.init();
     if (this.track === name && !opts.force) return;
     this.track = name;
+    this.musicStarted = false;
     clearTimeout(this.loopTimer);
-    if (!this.ctx) return;
+    if (!this.unlocked) return;
+    this.init();
+    if (!this.ctx || this.ctx.state !== 'running') return;
     const tr = TRACKS[name] || TRACKS.town;
     this.beat = 0;
     const step = 60 / tr.bpm / 2;        // eighth-note
     const steps = tr.lead.length;
     const loopBeats = steps * step;
 
+    this.musicStarted = true;
     const playLoop = () => {
       if (this.track !== name) return;
       const now = 0;
@@ -179,10 +194,10 @@ const Sound = {
     };
     playLoop();
   },
-  stopMusic() { this.track = null; clearTimeout(this.loopTimer); },
+  stopMusic() { this.track = null; this.musicStarted = false; clearTimeout(this.loopTimer); },
   sfx(name) {
     this.init();
-    if (!this.ctx || !this.sfxOn) return;
+    if (!this.ctx || this.ctx.state !== 'running' || !this.sfxOn) return;
     const t = this.ctx.currentTime;
     const beep = (f, dur, type = 'square', vel = .16, when = 0, slide = 0) => this.note(f, dur, type, vel, when, this.sfxGain, slide);
     switch (name) {
@@ -317,6 +332,8 @@ const Input = {
   held: {}, pressHandlers: [],
   init() {
     const block = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Enter','Escape'];
+    document.addEventListener('pointerdown', () => Sound.unlock(), { passive: true });
+    window.addEventListener('keydown', () => Sound.unlock(), { capture: true });
     window.addEventListener('keydown', (e) => {
       if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
       if (block.includes(e.key)) e.preventDefault();
