@@ -83,6 +83,9 @@ function blob(c,cx,cy,rx,ry,dark,base,light,opts={}) {
   // top-left key light
   PX.ell(c,cx-rx*0.28,cy-ry*0.36,rx*0.52,ry*0.27,light);
   PX.ell(c,cx-rx*0.34,cy-ry*0.42,rx*0.30,ry*0.15,'#ffffff');
+  // A pair of restrained specular marks gives the rounded forms a glossy finish.
+  PX.ell(c,cx-rx*0.47,cy-ry*0.05,Math.max(1,rx*.09),Math.max(1,ry*.11),spriteAlpha('#ffffff',.72));
+  PX.ell(c,cx+rx*.43,cy+ry*.53,Math.max(1,rx*.12),Math.max(1,ry*.07),spriteAlpha(dark,.36));
   // dither speckles along the shadow side for a soft pixel gradient
   for (let i=0;i<4;i++){
     const t=(i+1)/5;
@@ -134,6 +137,10 @@ function makeCreatureCanvas(sp, opts={}) {
 
   const shape = sp.shape || 'quad';
   const f = new Set(sp.features||[]);
+
+  // Soft contact shadow anchors the sprite without muddying its pixel silhouette.
+  PX.ell(x,36,64,23,3,spriteAlpha('#07131d',.42));
+  PX.ell(x,36,63,14,1,spriteAlpha('#07131d',.25));
 
   // --- shared feature helpers ---
   const wings = (cx,cy,span,drop,wingCol,edgeCol) => {
@@ -469,6 +476,9 @@ function makeCreatureCanvas(sp, opts={}) {
     PX.tri(x,53,18,56,15,59,18,accent); PX.rect(x,55,18,2,2,extra);
     PX.ell(x,40,43,6,4,accent); PX.ell(x,39,42,3,2,extra);
     PX.tri(x,37,44,40,39,43,44,extra);
+    // Fine ember bars catch the light along the shoulders and flanks.
+    PX.tri(x,31,37,36,35,35,39,dark); PX.tri(x,44,35,49,37,45,39,dark);
+    PX.rect(x,34,41,3,1,accent); PX.rect(x,46,40,2,1,light);
   } else if (sp.id === 'sobble_a') {
     // Water-drop cheek markings, a luminous throat and a finned tail.
     PX.ell(x,44,30,2,3,accent); PX.ell(x,45,29,1,1,extra);
@@ -476,6 +486,10 @@ function makeCreatureCanvas(sp, opts={}) {
     PX.tri(x,35,38,40,35,43,38,light); PX.tri(x,35,38,40,41,43,38,accent);
     PX.line(x,15,41,11,35,accent,2); PX.line(x,15,41,10,44,light,2);
     PX.rect(x,36,35,1,2,'#ffffff');
+    // Pearlescent flank scales and a tear-bright reflection sell the water skin.
+    PX.ell(x,31,39,2,1,light); PX.ell(x,34,42,2,1,accent);
+    PX.ell(x,38,44,2,1,light); PX.rect(x,61,34,1,2,'#ffffff');
+    PX.tri(x,11,35,14,32,14,38,extra);
   } else if (sp.id === 'treecko_a') {
     // Seed-shaped belly, cheek scales and a broad veined leaf-tail.
     PX.ell(x,38,44,6,5,light); PX.ell(x,37,43,3,2,'#eaffb8');
@@ -483,6 +497,8 @@ function makeCreatureCanvas(sp, opts={}) {
     PX.tri(x,16,42,7,32,22,38,accent); PX.tri(x,16,40,10,33,20,38,light);
     PX.line(x,10,38,21,41,dark,1); PX.line(x,14,39,15,35,dark,1);
     PX.rect(x,35,35,2,1,extra); PX.rect(x,41,35,2,1,extra);
+    PX.ell(x,31,40,2,1,light); PX.ell(x,47,40,2,1,light);
+    PX.tri(x,34,48,38,46,39,49,accent); PX.tri(x,40,49,43,46,44,48,accent);
   }
 
   // elemental flourishes around the sprite
