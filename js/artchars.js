@@ -247,12 +247,16 @@
     for (let y = 0; y < map.height; y++) for (let x = 0; x < map.width; x++) {
       if (map.tiles[y][x] !== 'tall_grass') continue;
       const px = x * T, py = y * T;
-      for (let i = 0; i < 3; i++) {
-        const bx = px + 5 + i * 9 + ((x * 5 + y * 3 + i * 7) % 5);
-        const sway = Math.sin(time * 2.2 + x * .8 + y * .6 + i) * 2.2;
-        const top = py + 10 + (i % 2) * 5;
-        PX.line(ctx, bx, py + 30, bx + sway, top, i % 2 ? '#57c47a' : '#3a9e60', 1);
-        PX.rect(ctx, bx + sway | 0, top, 1, 2, '#8ee0a0');
+      // A restrained breeze catches the upper leaves; static blades below keep
+      // the patch lush even on low-frame-rate mobile devices.
+      for (let i = 0; i < 4; i++) {
+        const bx = px + 4 + i * 8 + ((x * 5 + y * 3 + i * 7) % 5);
+        const sway = Math.sin(time * 1.8 + x * .8 + y * .6 + i * .9) * 2.4;
+        const top = py + 7 + ((x + y + i) % 3) * 4;
+        const bottom = py + 27 + (i % 2) * 3;
+        PX.line(ctx, bx, bottom, bx + sway, top + 3, i % 2 ? '#3d9658' : '#55b970', 1);
+        PX.line(ctx, bx + 1, bottom - 2, bx + sway + 1, top, i % 2 ? '#78cd82' : '#a0df91', 1);
+        PX.rect(ctx, bx + sway | 0, top - 1, 2, 2, '#b3e99e');
       }
     }
     ctx.restore();

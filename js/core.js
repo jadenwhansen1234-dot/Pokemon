@@ -333,6 +333,47 @@ const Input = {
       if (e.key === 'Shift') this.held.shift = false;
     });
     window.addEventListener('blur', () => { this.held = {}; });
+
+    const touchControls = document.getElementById('touch-controls');
+    const activePointers = new Map();
+    const dispatchKey = (key, type) => {
+      document.dispatchEvent(new KeyboardEvent(type, {
+        key: key.length === 1 ? key : key,
+        bubbles: true,
+        cancelable: true
+      }));
+    };
+    const releasePointer = pointerId => {
+      const key = activePointers.get(pointerId);
+      if (!key) return;
+      dispatchKey(key, 'keyup');
+      activePointers.delete(pointerId);
+    };
+    touchControls?.querySelectorAll('[data-key]').forEach(button => {
+      const key = button.dataset.key;
+      button.addEventListener('pointerdown', event => {
+        event.preventDefault();
+        if (button.hasAttribute('data-hold')) {
+          activePointers.set(event.pointerId, key);
+          button.setPointerCapture?.(event.pointerId);
+          dispatchKey(key, 'keydown');
+        } else {
+          dispatchKey(key, 'keydown');
+          dispatchKey(key, 'keyup');
+        }
+      });
+      const release = event => releasePointer(event.pointerId);
+      button.addEventListener('pointerup', release);
+      button.addEventListener('pointercancel', release);
+      button.addEventListener('lostpointercapture', release);
+      button.addEventListener('click', event => {
+        // Keep the controls usable with a keyboard or assistive technology too.
+        if (event.detail === 0) {
+          dispatchKey(key, 'keydown');
+          dispatchKey(key, 'keyup');
+        }
+      });
+    });
   },
   onPress(fn) { this.pressHandlers.push(fn); },
   down(...keys) { return keys.some(k => this.held[k]); },

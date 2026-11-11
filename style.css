@@ -680,3 +680,81 @@ body::before {
   .starter-detail { font-size: 17px; }
   .menu-starters .menu-footer { margin-top: 9px; font-size: 15px; }
 }
+
+/* Touch controls stay outside the game canvas so they never cover the scene. */
+#touch-controls { display: none; }
+.touch-key {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0;
+  color: #f5f7ff;
+  background: linear-gradient(160deg, #303d70, #111a37);
+  border: 2px solid #7182b7;
+  border-radius: 12px;
+  box-shadow: 0 4px 0 #070a16, inset 0 1px 0 rgba(255,255,255,.13);
+  font: 700 20px/1 system-ui, sans-serif;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.touch-key:active { transform: translateY(3px); box-shadow: 0 1px 0 #070a16; background: #5268a5; }
+.touch-key:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+@media (max-width: 760px) {
+  html, body { min-height: 100%; }
+  body { min-height: 100dvh; align-items: center; }
+  #app {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    justify-content: center;
+    gap: 8px;
+    padding: max(6px, env(safe-area-inset-top)) 0 max(8px, env(safe-area-inset-bottom));
+  }
+  #gameframe {
+    flex: 0 1 auto;
+    width: min(100vw, calc((100dvh - 154px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 1.3333));
+    max-width: 100vw;
+    border-radius: 8px;
+    box-shadow: 0 0 0 2px #1b2444, 0 8px 24px rgba(0,0,0,.7);
+  }
+  #gameframe::after { border-radius: 8px; }
+  #touch-controls {
+    display: flex;
+    flex: 0 0 auto;
+    width: min(100%, 520px);
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+    touch-action: none;
+  }
+  .touch-dpad {
+    display: grid;
+    grid-template: 48px 48px 48px / 48px 48px 48px;
+    gap: 3px;
+    touch-action: none;
+  }
+  .touch-up { grid-area: 1 / 2; }
+  .touch-left { grid-area: 2 / 1; }
+  .touch-center { grid-area: 2 / 2; display: grid; place-items: center; color: #6574a4; font-size: 20px; }
+  .touch-right { grid-area: 2 / 3; }
+  .touch-down { grid-area: 3 / 2; }
+  .touch-actions { display: flex; align-items: center; gap: 12px; }
+  .touch-actions .touch-key { min-width: 56px; min-height: 56px; border-radius: 50%; }
+  .touch-menu { font: 700 11px/1 system-ui, sans-serif; }
+  .touch-confirm { color: #fff4d1; background: linear-gradient(160deg, #b83e68, #682743); border-color: #ef8dad; font-size: 23px; }
+  #hint { display: none; }
+}
+
+@media (max-height: 520px) and (max-width: 900px) {
+  #app { gap: 5px; }
+  #gameframe {
+    width: min(100vw, calc((100dvh - 138px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 1.3333));
+  }
+  #touch-controls { width: min(100%, 440px); }
+  .touch-dpad { grid-template: 38px 38px 38px / 38px 38px 38px; gap: 2px; }
+  .touch-key { min-width: 38px; min-height: 38px; border-radius: 9px; font-size: 17px; }
+  .touch-actions .touch-key { min-width: 44px; min-height: 44px; }
+}

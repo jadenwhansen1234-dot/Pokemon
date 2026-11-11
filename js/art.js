@@ -88,18 +88,37 @@ var Art = globalThis.Art = globalThis.Art || {};
   }
 
   function tallGrassTile(ctx, x, y, seed) {
-    const p = PAL.grass;
     const r = seeded(x, y, seed + 99);
-    PX.rect(ctx, x, y, T, T, '#123f2b');
-    for (let i = 0; i < 4; i++) PX.ell(ctx, x + 5 + r() * 22, y + 5 + r() * 22, 4 + r() * 5, 3, '#174a31');
-    for (let i = 0; i < 15; i++) {
-      const bx = x + 2 + Math.floor(r() * 28), by = y + 10 + Math.floor(r() * 22);
-      const h = 7 + Math.floor(r() * 9);
-      PX.line(ctx, bx, by, bx - 2, by - h, '#1d5a38', 1);
-      PX.line(ctx, bx + 1, by, bx + 1, by - h - 2, i % 3 ? '#48a86a' : '#2f8a52', 1);
-      PX.line(ctx, bx + 3, by, bx + 5, by - h + 2, '#256c43', 1);
+    PX.rect(ctx, x, y, T, T, '#103a29');
+    // Soft, mottled understory gives the patch depth without a hard tile edge.
+    for (let i = 0; i < 6; i++) {
+      const cx = x + 3 + Math.floor(r() * 26), cy = y + 7 + Math.floor(r() * 22);
+      PX.ell(ctx, cx, cy, 3 + Math.floor(r() * 5), 2 + Math.floor(r() * 3), i % 3 ? '#174a31' : '#1b5234');
     }
-    PX.rect(ctx, x, y + T - 1, T, 1, 'rgba(6,20,14,.35)');
+    for (let i = 0; i < 14; i++) {
+      const bx = x + 2 + Math.floor(r() * 28), by = y + 25 + Math.floor(r() * 7);
+      const h = 8 + Math.floor(r() * 13);
+      const shade = i % 4;
+      const stem = shade === 0 ? '#286c43' : shade === 1 ? '#347d4d' : '#205a38';
+      const edge = shade === 0 ? '#4ca66a' : shade === 1 ? '#62b978' : '#3a9258';
+      // Three-leaf fans read clearly as grass while retaining crisp pixel edges.
+      PX.line(ctx, bx, by, bx - 3, by - h + 3, stem, 2);
+      PX.line(ctx, bx, by, bx, by - h, edge, 1);
+      PX.line(ctx, bx + 1, by, bx + 4, by - h + 5, stem, 2);
+      PX.rect(ctx, bx - 1, by - h + 1, 1, 2, '#8bd492');
+    }
+    // Low foreground blades and a dark base anchor the player inside the patch.
+    PX.rect(ctx, x, y + 28, T, 4, 'rgba(7,28,19,.42)');
+    for (let i = 0; i < 5; i++) {
+      const bx = x + 2 + Math.floor(r() * 28), by = y + 31;
+      const h = 5 + Math.floor(r() * 7);
+      PX.line(ctx, bx, by, bx - 2, by - h, '#24653d', 2);
+      PX.line(ctx, bx + 1, by, bx + 2, by - h - 2, i % 2 ? '#4ba969' : '#72c980', 1);
+    }
+    for (let i = 0; i < 5; i++) {
+      const sx = x + 2 + Math.floor(r() * 28), sy = y + 18 + Math.floor(r() * 12);
+      PX.rect(ctx, sx, sy, 1, 1, i % 2 ? '#75c47b' : '#b0dd83');
+    }
   }
 
   function pathTile(ctx, x, y, seed, style) {

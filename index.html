@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Pokémon Eclipse: Aurelia Genesis</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="style.css">
@@ -25,6 +25,19 @@
     <div id="toast"></div>
     <div id="fade"></div>
   </div>
+  <nav id="touch-controls" aria-label="Touch game controls">
+    <div class="touch-dpad" aria-label="Movement">
+      <button type="button" class="touch-key touch-up" data-key="ArrowUp" data-hold aria-label="Move up">▲</button>
+      <button type="button" class="touch-key touch-left" data-key="ArrowLeft" data-hold aria-label="Move left">◀</button>
+      <span class="touch-center" aria-hidden="true">✦</span>
+      <button type="button" class="touch-key touch-right" data-key="ArrowRight" data-hold aria-label="Move right">▶</button>
+      <button type="button" class="touch-key touch-down" data-key="ArrowDown" data-hold aria-label="Move down">▼</button>
+    </div>
+    <div class="touch-actions">
+      <button type="button" class="touch-key touch-menu" data-key="x" aria-label="Open or close menu">Menu</button>
+      <button type="button" class="touch-key touch-confirm" data-key="z" aria-label="Interact or confirm">A</button>
+    </div>
+  </nav>
   <div id="hint">Arrows / WASD move &nbsp;·&nbsp; Z / Enter interact &nbsp;·&nbsp; X / Esc menu &nbsp;·&nbsp; M mute</div>
 </div>
 <script src="js/core.js"></script>
